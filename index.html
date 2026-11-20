@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sněmovna lidsky — Co schválil Parlament</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-soft: #eff6ff;
+      --green: #16a34a;
+      --green-soft: #dcfce7;
+      --red: #dc2626;
+      --red-soft: #fee2e2;
+      --amber: #d97706;
+      --amber-soft: #fef3c7;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --radius: 14px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #1f2937;
+      --primary: #3b82f6;
+      --primary-soft: rgba(59, 130, 246, 0.15);
+      --green: #22c55e;
+      --green-soft: rgba(34, 197, 94, 0.15);
+      --red: #ef4444;
+      --red-soft: rgba(239, 68, 68, 0.15);
+      --amber: #f59e0b;
+      --amber-soft: rgba(245, 158, 11, 0.15);
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+    }
+
+    .header-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--primary); color: #fff;
+      display: grid; place-items: center; font-weight: 800; font-size: 18px;
+    }
+    .brand h1 { margin: 0; font-size: 18px; line-height: 1.2; }
+    .brand p { margin: 0; font-size: 12px; color: var(--muted); }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 12.5px; font-weight: 600; padding: 6px 12px;
+      border-radius: 999px; border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--muted);
+    }
+    .live-badge.connected { background: var(--green-soft); color: var(--green); border-color: transparent; }
+    .live-badge.disconnected { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+    .btn-icon {
+      border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      border-radius: 10px; padding: 7px 12px; font-size: 13px; cursor: pointer; font-weight: 600;
+    }
+    .btn-icon:hover { background: var(--surface-2); }
+
+    main { max-width: 1080px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    .error-banner {
+      display: none; margin-bottom: 16px; padding: 12px 16px; border-radius: 12px;
+      background: var(--amber-soft); color: var(--amber); font-size: 13px;
+      border: 1px solid rgba(217, 119, 6, 0.25);
+    }
+
+    .controls {
+      display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; margin-bottom: 20px;
+    }
+    @media (max-width: 780px) {
+      .controls { grid-template-columns: 1fr 1fr; }
+      .controls input { grid-column: 1 / -1; }
+    }
+
+    input[type="search"], select {
+      background: var(--surface); color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 12px; font-size: 14px; outline: none;
+    }
+    input[type="search"]:focus, select:focus { border-color: var(--primary); }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;
+    }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px;
+      cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .card:hover { transform: translateY(-2px); border-color: var(--primary); }
+
+    .card-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .badge-approved { background: var(--green-soft); color: var(--green); }
+    .badge-rejected { background: var(--red-soft); color: var(--red); }
+    .badge-cat { background: var(--surface-2); color: var(--muted); font-weight: 600; }
+    .badge-proposer { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+
+    /* Štítky výhodnosti pro lidi se smajlíky */
+    .badge-benefit-pos { background: var(--green-soft); color: var(--green); font-size: 12px; }
+    .badge-benefit-neg { background: var(--red-soft); color: var(--red); font-size: 12px; }
+    .badge-benefit-neu { background: var(--surface-2); color: var(--muted); font-size: 12px; }
+
+    .card-date { font-size: 12px; color: var(--muted); }
+    .card h2 { margin: 0; font-size: 17px; line-height: 1.35; }
+
+    .points {
+      margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column;
+      gap: 7px; font-size: 13.5px; color: var(--text);
+    }
+    .points li strong { color: var(--muted); font-weight: 600; }
+
+    .vote-bar-wrap { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); }
+    .vote-bar {
+      height: 8px; border-radius: 999px; overflow: hidden; display: flex;
+      background: var(--surface-2); margin-bottom: 6px;
+    }
+    .vb-pro { background: var(--green); }
+    .vb-proti { background: var(--red); }
+    .vb-zdrzel { background: var(--amber); }
+
+    .vote-nums { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .card-footer-hint {
+      font-size: 12.5px; font-weight: 600; color: var(--primary);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
+      display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface); color: var(--text); width: 100%; max-width: 720px;
+      max-height: 90vh; overflow-y: auto; border-radius: 18px; padding: 24px;
+      border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .modal-close {
+      border: none; background: var(--surface-2); color: var(--text); width: 34px; height: 34px;
+      border-radius: 10px; font-size: 18px; cursor: pointer; flex-shrink: 0;
+    }
+
+    .swot-tabs { display: flex; gap: 8px; margin: 18px 0 12px; }
+    .swot-tab {
+      flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 13.5px; cursor: pointer;
+    }
+    .swot-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 600px) { .swot-grid { grid-template-columns: 1fr; } }
+
+    .swot-box {
+      padding: 12px; border-radius: 12px; font-size: 13px;
+      border: 1px solid var(--border); background: var(--surface-2);
+    }
+    .swot-box h4 { margin: 0 0 4px; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .swot-s h4 { color: var(--green); }
+    .swot-w h4 { color: var(--red); }
+    .swot-o h4 { color: var(--primary); }
+    .swot-t h4 { color: var(--amber); }
+
+    .official-box {
+      margin-top: 16px; padding: 12px; border-radius: 10px;
+      background: var(--surface-2); font-size: 12.5px; color: var(--muted);
+    }
+    .modal-links {
+      margin-top: 18px; display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .btn-primary {
+      background: var(--primary); color: #fff; text-decoration: none;
+      padding: 9px 14px; border-radius: 10px; font-size: 13.5px; font-weight: 600; display: inline-block;
+    }
+
+    footer {
+      text-align: center; padding: 24px 16px; font-size: 12.5px;
+      color: var(--muted); border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--primary); text-decoration: none; }
+    .empty-state { text-align: center; padding: 48px 16px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">S</div>
+      <div>
+        <h1>Sněmovna lidsky</h1>
+        <p>Přehled hlasování Poslanecké sněmovny v lidštině</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div id="liveBadge" class="live-badge">
+        <span class="live-dot"></span>
+        <span id="liveBadgeText">Načítám živá data...</span>
+      </div>
+      <button id="themeBtn" class="btn-icon" title="Přepnout vzhled">🌙 Tmavý režim</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="errorBanner" class="error-banner"></div>
+
+  <div class="controls">
+    <input id="searchInput" type="search" placeholder="Hledat zákon, téma, autora nebo stranu..." />
+    <select id="statusFilter">
+      <option value="all">Všechny výsledky</option>
+      <option value="approved">Jen schválené</option>
+      <option value="rejected">Jen zamítnuté</option>
+    </select>
+    <select id="categoryFilter">
+      <option value="all">Všechna témata</option>
+    </select>
+    <select id="proposerFilter">
+      <option value="all">Všichni předkladatelé</option>
+      <option value="government">Vláda ČR</option>
+      <option value="deputies">Poslanci</option>
+      <option value="senate">Senát PČR</option>
+      <option value="region">Kraje</option>
+    </select>
+  </div>
+
+  <div id="cardsGrid" class="grid"></div>
+</main>
+
+<footer>
+  Zdroj dat: <a href="https://www.snemovna.hlidacstatu.cz/votes?period=10" target="_blank" rel="noopener">Hlídač státu</a> &amp; otevřená data PSP ČR. Shrnutí a SWOT analýzy jsou generovány pomocí AI.
+</footer>
+
+<div id="modalBackdrop" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div>
+        <div id="modalBadges" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;"></div>
+        <h2 id="modalTitle" style="margin:0; font-size:20px;"></h2>
+      </div>
+      <button id="modalClose" class="modal-close" aria-label="Zavřít">&times;</button>
+    </div>
+
+    <ul id="modalPoints" class="points" style="margin-bottom:16px;"></ul>
+
+    <div class="vote-bar-wrap">
+      <div id="modalVoteBar" class="vote-bar"></div>
+      <div id="modalVoteNums" class="vote-nums"></div>
+    </div>
+
+    <div class="swot-tabs">
+      <button class="swot-tab active" data-swot="citizens">👥 SWOT: Výhodnost pro lidi</button>
+      <button class="swot-tab" data-swot="state">🏛️ SWOT: Výhodnost pro stát</button>
+    </div>
+    <div id="swotContent" class="swot-grid"></div>
+
+    <div class="official-box">
+      <strong>Úřední název:</strong> <span id="modalOfficial"></span>
+    </div>
+
+    <div class="modal-links">
+      <span id="modalMeta" style="font-size:12.5px; color:var(--muted);"></span>
+      <a id="modalHlidacLink" class="btn-primary" href="#" target="_blank" rel="noopener">Zobrazit na Hlídači státu ↗</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =========================================================================
+  // JEDINÉ MÍSTO K ÚPRAVĚ: Vložte sem svou URL adresu z Google Apps Scriptu
+  // =========================================================================
+  const LIVE_API_URL = "https://script.google.com/macros/s/AKfycbwmw90EREX4Y3hO-GkvfD5G_5nxx7vFzViHZT5pIEE0UdsgYjAx-FRYLERCCB9dnBqH/exec";
+
+  const FALLBACK_DATA = [
+    {
+      id: "demo-1",
+      date: "2026-11-13",
+      meeting: "Tisk 311",
+      voteNumber: "89028",
+      status: "approved",
+      category: "Daně a finance",
+      humanTitle: "Ukázka: Novela zákona o daních z příjmů",
+      officialTitle: "Vládní návrh zákona, kterým se mění zákon o daních z příjmů",
+      proposer: "Vláda ČR (vládní koalice)",
+      proposerType: "government",
+      citizenBenefit: "positive",
+      summary: {
+        what: "Toto je ukázkový záznam. Po vložení vašeho odkazu do LIVE_API_URL se načtou živá data.",
+        who: "Zaměstnanci, živnostníci a firmy.",
+        impact: "Zjednodušení daňového přiznání."
+      },
+      swot: {
+        citizens: {
+          strengths: "Méně papírování při ročním zúčtování.",
+          weaknesses: "Zrušení některých drobných výjimek.",
+          opportunities: "Rychlejší online vyřízení.",
+          threats: "Krátkodobá nejistota při přechodu."
+        },
+        state: {
+          strengths: "Nižší náklady na správu daní.",
+          weaknesses: "Nutnost upravit státní IT systémy.",
+          opportunities: "Stabilnější výběr daní.",
+          threats: "Možný krátkodobý pokles příjmů."
+        }
+      },
+      votes: { pro: 77, proti: 23, zdrzelSe: 0, nepritomni: 100 },
+      hlidacUrl: "https://www.snemovna.hlidacstatu.cz/votes?period=10"
+    }
+  ];
+
+  let allVotes = [];
+  let activeModalVote = null;
+  let activeSwotTab = "citizens";
+
+  const liveBadge = document.getElementById("liveBadge");
+  const liveBadgeText = document.getElementById("liveBadgeText");
+  const errorBanner = document.getElementById("errorBanner");
+  const cardsGrid = document.getElementById("cardsGrid");
+  const searchInput = document.getElementById("searchInput");
+  const statusFilter = document.getElementById("statusFilter");
+  const categoryFilter = document.getElementById("categoryFilter");
+  const proposerFilter = document.getElementById("proposerFilter");
+
+  const themeBtn = document.getElementById("themeBtn");
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("snemovna_theme", theme);
+    themeBtn.textContent = theme === "dark" ? "☀️ Světlý režim" : "🌙 Tmavý režim";
+  }
+  applyTheme(localStorage.getItem("snemovna_theme") || "light");
+  themeBtn.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    applyTheme(current === "dark" ? "light" : "dark");
+  });
+
+  // Pomocná funkce pro smajlíka u schválených zákonů
+  function getBenefitBadge(v) {
+    if (v.status !== "approved") return "";
+    if (v.citizenBenefit === "positive") {
+      return '<span class="badge badge-benefit-pos" title="Celkově výhodné pro lidi">😊 Pro lidi výhodné</span>';
+    }
+    if (v.citizenBenefit === "negative") {
+      return '<span class="badge badge-benefit-neg" title="Celkově nevýhodné pro lidi">😔 Pro lidi nevýhodné</span>';
+    }
+    return '<span class="badge badge-benefit-neu" title="Neutrální nebo technický dopad">😐 Neutrální dopad</span>';
+  }
+
+  async function loadData() {
+    if (!LIVE_API_URL || LIVE_API_URL === "SEM_VLOZTE_VAS_ODKAZ") {
+      setLiveStatus(false, "V kódu ještě není vložený odkaz LIVE_API_URL.");
+      initApp(FALLBACK_DATA);
+      return;
+    }
+
+    try {
+      const res = await fetch(LIVE_API_URL);
+      if (!res.ok) throw new Error("Server vrátil chybu " + res.status);
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        setLiveStatus(false, "Odkaz funguje, ale Google Tabulka zatím neobsahuje žádná hlasování.");
+        initApp(FALLBACK_DATA);
+        return;
+      }
+
+      setLiveStatus(true, `Živá data připojena (${data.length})`);
+      initApp(data);
+    } catch (err) {
+      setLiveStatus(false, "Nepodařilo se načíst živá data (" + err.message + "). Zkontrolujte v Apps Scriptu oprávnění 'Kdokoli'.");
+      initApp(FALLBACK_DATA);
+    }
+  }
+
+  function setLiveStatus(isConnected, message) {
+    liveBadge.classList.remove("connected", "disconnected");
+    if (isConnected) {
+      liveBadge.classList.add("connected");
+      liveBadgeText.textContent = message;
+      errorBanner.style.display = "none";
+    } else {
+      liveBadge.classList.add("disconnected");
+      liveBadgeText.textContent = "Živá data nepřipojena (ukázka)";
+      errorBanner.textContent = "⚠️ " + message;
+      errorBanner.style.display = "block";
+    }
+  }
+
+  function initApp(data) {
+    allVotes = data;
+    populateCategories(data);
+    renderCards();
+  }
+
+  function populateCategories(data) {
+    const cats = [...new Set(data.map(v => v.category).filter(Boolean))].sort();
+    categoryFilter.innerHTML = '<option value="all">Všechna témata</option>';
+    cats.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      categoryFilter.appendChild(opt);
+    });
+  }
+
+  function renderCards() {
+    const q = searchInput.value.trim().toLowerCase();
+    const st = statusFilter.value;
+    const cat = categoryFilter.value;
+    const prop = proposerFilter.value;
+
+    const filtered = allVotes.filter(v => {
+      if (st !== "all" && v.status !== st) return false;
+      if (cat !== "all" && v.category !== cat) return false;
+      if (prop !== "all" && v.proposerType !== prop) return false;
+      if (q) {
+        const hay = [
+          v.humanTitle, v.officialTitle, v.proposer, v.category,
+          v.summary?.what, v.summary?.who, v.summary?.impact
+        ].join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      cardsGrid.innerHTML = '<div class="empty-state">Žádná hlasování neodpovídají vašemu filtru.</div>';
+      return;
+    }
+
+    cardsGrid.innerHTML = filtered.map(v => {
+      const pro = v.votes?.pro || 0;
+      const proti = v.votes?.proti || 0;
+      const zdrzel = v.votes?.zdrzelSe || 0;
+      const total = Math.max(1, pro + proti + zdrzel);
+
+      const statusBadge = v.status === "approved"
+        ? '<span class="badge badge-approved">✓ Schváleno</span>'
+        : '<span class="badge badge-rejected">✕ Zamítnuto</span>';
+
+      return `
+        <article class="card" data-id="${escapeHtml(String(v.id))}">
+          <div class="card-top">
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              ${statusBadge}
+              ${getBenefitBadge(v)}
+            </div>
+            <span class="card-date">${escapeHtml(v.date || "")}</span>
+          </div>
+
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="badge badge-proposer">✍️ Napsal: ${escapeHtml(v.proposer || "Neuvedeno")}</span>
+            <span class="badge badge-cat">${escapeHtml(v.category || "Ostatní")}</span>
+          </div>
+
+          <h2>${escapeHtml(v.humanTitle || v.officialTitle)}</h2>
+
+          <ul class="points">
+            <li><strong>O co jde:</strong> ${escapeHtml(v.summary?.what || "")}</li>
+            <li><strong>Koho se dotkne:</strong> ${escapeHtml(v.summary?.who || "")}</li>
+            <li><strong>V praxi:</strong> ${escapeHtml(v.summary?.impact || "")}</li>
+          </ul>
+
+          <div class="vote-bar-wrap">
+            <div class="vote-bar">
+              <div class="vb-pro" style="width:${(pro / total) * 100}%"></div>
+              <div class="vb-proti" style="width:${(proti / total) * 100}%"></div>
+              <div class="vb-zdrzel" style="width:${(zdrzel / total) * 100}%"></div>
+            </div>
+            <div class="vote-nums">
+              <span>Pro: <strong>${pro}</strong></span>
+              <span>Proti: <strong>${proti}</strong></span>
+              <span>Zdržel se: <strong>${zdrzel}</strong></span>
+            </div>
+          </div>
+
+          <div class="card-footer-hint">
+            <span>Zobrazit SWOT analýzu a detail</span>
+            <span>→</span>
+          </div>
+        </article>
+      `;
+    }).join("");
+
+    document.querySelectorAll(".card").forEach(el => {
+      el.addEventListener("click", () => {
+        const vote = allVotes.find(v => String(v.id) === el.dataset.id);
+        if (vote) openModal(vote);
+      });
+    });
+  }
+
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalClose = document.getElementById("modalClose");
+
+  function openModal(v) {
+    activeModalVote = v;
+    activeSwotTab = "citizens";
+
+    const statusBadge = v.status === "approved"
+      ? '<span class="badge badge-approved">✓ Schváleno</span>'
+      : '<span class="badge badge-rejected">✕ Zamítnuto</span>';
+
+    document.getElementById("modalBadges").innerHTML = `
+      ${statusBadge}
+      ${getBenefitBadge(v)}
+      <span class="badge badge-cat">${escapeHtml(v.category || "Ostatní")}</span>
+      <span class="badge badge-proposer">✍️ Napsal: ${escapeHtml(v.proposer || "Neuvedeno")}</span>
+    `;
+    document.getElementById("modalTitle").textContent = v.humanTitle || v.officialTitle;
+    document.getElementById("modalPoints").innerHTML = `
+      <li><strong>O co jde:</strong> ${escapeHtml(v.summary?.what || "")}</li>
+      <li><strong>Koho se dotkne:</strong> ${escapeHtml(v.summary?.who || "")}</li>
+      <li><strong>V praxi:</strong> ${escapeHtml(v.summary?.impact || "")}</li>
+    `;
+
+    const pro = v.votes?.pro || 0;
+    const proti = v.votes?.proti || 0;
+    const zdrzel = v.votes?.zdrzelSe || 0;
+    const total = Math.max(1, pro + proti + zdrzel);
+
+    document.getElementById("modalVoteBar").innerHTML = `
+      <div class="vb-pro" style="width:${(pro / total) * 100}%"></div>
+      <div class="vb-proti" style="width:${(proti / total) * 100}%"></div>
+      <div class="vb-zdrzel" style="width:${(zdrzel / total) * 100}%"></div>
+    `;
+    document.getElementById("modalVoteNums").innerHTML = `
+      <span>Pro: <strong>${pro}</strong></span>
+      <span>Proti: <strong>${proti}</strong></span>
+      <span>Zdržel se: <strong>${zdrzel}</strong></span>
+    `;
+
+    document.getElementById("modalOfficial").textContent = v.officialTitle || "";
+    document.getElementById("modalMeta").textContent = `${v.date || ""} • ${v.meeting || ""}`;
+    document.getElementById("modalHlidacLink").href = v.hlidacUrl || "https://www.snemovna.hlidacstatu.cz/votes?period=10";
+
+    renderSwot();
+    modalBackdrop.classList.add("open");
+  }
+
+  function renderSwot() {
+    document.querySelectorAll(".swot-tab").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.swot === activeSwotTab);
+    });
+
+    const swot = activeModalVote?.swot?.[activeSwotTab] || {};
+    document.getElementById("swotContent").innerHTML = `
+      <div class="swot-box swot-s"><h4>Výhody (S)</h4>${escapeHtml(swot.strengths || "Neuvedeno")}</div>
+      <div class="swot-box swot-w"><h4>Nevýhody (W)</h4>${escapeHtml(swot.weaknesses || "Neuvedeno")}</div>
+      <div class="swot-box swot-o"><h4>Příležitosti (O)</h4>${escapeHtml(swot.opportunities || "Neuvedeno")}</div>
+      <div class="swot-box swot-t"><h4>Rizika (T)</h4>${escapeHtml(swot.threats || "Neuvedeno")}</div>
+    `;
+  }
+
+  document.querySelectorAll(".swot-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeSwotTab = btn.dataset.swot;
+      renderSwot();
+    });
+  });
+
+  modalClose.addEventListener("click", () => modalBackdrop.classList.remove("open"));
+  modalBackdrop.addEventListener("click", e => {
+    if (e.target === modalBackdrop) modalBackdrop.classList.remove("open");
+  });
+
+  [searchInput, statusFilter, categoryFilter, proposerFilter].forEach(el => {
+    el.addEventListener("input", renderCards);
+    el.addEventListener("change", renderCards);
+  });
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  loadData();
+</script>
+</body>
+</html>
