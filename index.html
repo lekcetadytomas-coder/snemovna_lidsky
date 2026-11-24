@@ -494,7 +494,7 @@
               ${statusBadge}
               ${getBenefitBadge(v)}
             </div>
-            <span class="card-date">${escapeHtml(v.date || "")}</span>
+            <span class="card-date">🕒 ${escapeHtml(v.date || "")}</span>
           </div>
 
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -580,7 +580,7 @@
     `;
 
     document.getElementById("modalOfficial").textContent = v.officialTitle || "";
-    document.getElementById("modalMeta").textContent = `${v.date || ""} • ${v.meeting || ""}`;
+    document.getElementById("modalMeta").textContent = `Projednáno: ${v.date || ""} • ${v.meeting || ""}`;
     document.getElementById("modalHlidacLink").href = v.hlidacUrl || "https://www.snemovna.hlidacstatu.cz/votes?period=10";
 
     renderSwot();
